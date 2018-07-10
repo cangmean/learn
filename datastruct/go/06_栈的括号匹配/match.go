@@ -71,7 +71,7 @@ func match(text string) {
 	handle_pair[")"] = "("
 	handle_pair["}"] = "{"
 	handle_pair["]"] = "["
-	
+
 	list := New()
 	for _, s := range text {
 		s := string(s)
