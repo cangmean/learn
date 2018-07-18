@@ -1,6 +1,6 @@
 {
   "semi": false,
   "singleQuote": true,
-  "disableLanguages": ["python", "javascript"],
+  "disableLanguages": ["python", "javascript", "golang"],
   "tabWidth": 2
 }
