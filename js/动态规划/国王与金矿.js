@@ -1,5 +1,5 @@
 
-/**
+/**  详解地址: https://blog.csdn.net/program_developer/article/details/82846180
  * f(n, w) = 0          (当 n <= 1, w < p[0])
  * f(n, w) = g[0]       (当 n == 1, w > p[0])
  * f(n, w) = f(n-1, w)  (当 n > 1, w < p[n-1])
