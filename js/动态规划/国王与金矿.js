@@ -44,43 +44,40 @@ function getMostGold(n, w, g, p) {
 function getMostGold2(n, w, g, p) {
     // 动态规划方法
 
+    let col = w + 1; // f(n, 0) 考虑人数为0时
     let preResult = [] // 前一个挖矿数据, 每个元素都是匹配不同人数时的金矿数
     let result = [] // 当前挖矿的数据
 
     // 第一个矿的数据, 设置边界格子的值
-    for (let i = 0; i < w; i++) {
+    for (let i = 0; i < col; i++) {
         if (i < p[0]) {
             preResult[i] = 0
         } else {
             preResult[i] = g[0]
         }
     }
-
     // 填充其余格子的值, 从上一行推出下一行, 外层的是金矿数, 内层的是工人数
     for (let i = 0; i < n; i++) {
-        for (let j = 0; j < w; j++) {
-
+        for (let j = 0; j < col; j++) {
             // p[i] 是 第 i - 1 矿需要的工人数
             if (j < p[i]) {
                 result[j] = preResult[j]
             } else {
                 // preResult[j] 表示当不挖当前矿时的数量
-                // preResult[j - p[i - 1]] + g[i]。 表示挖当前矿时数量 + 其余人数挖之前矿时的数量
-                result[j] = Math.max(preResult[j], preResult[j - p[i - 1]] + g[i])
+                // preResult[j - p[i]] + g[i]。 表示挖当前矿时数量 + 其余人数挖之前矿时的数量
+                result[j] = Math.max(preResult[j], preResult[j - p[i]] + g[i])
             }
 
         }
 
         // 用当前金矿的数量边界, 覆盖之前的
-        for (let j = 0; j < w; j++) {
+        for (let j = 0; j < col; j++) {
             preResult[j] = result[j]
         }
     }
     return result[w]
 
 }
-
-
 
 let gold = [400, 500, 200, 300, 350]
 let person = [5, 5, 3, 4, 3]
