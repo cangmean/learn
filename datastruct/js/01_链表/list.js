@@ -46,6 +46,7 @@ class List {
     /*
       反转链表
       移动head指针，指向下个节点， 并把原来节点指向上一个节点
+      p 表示上一个节点
     */
     let p = null
     let head = this.head
@@ -73,7 +74,7 @@ class List {
   }
 }
 
-;(function main() {
+; (function main() {
   let list = new List()
   list.append(3)
   list.append(5)
