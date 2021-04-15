@@ -1,5 +1,6 @@
 /**
  * 最小生成树
+ * 参考: https://codingnote.cc/zh-hk/p/354670/  prim 描述
  */
 
 
@@ -81,7 +82,7 @@ function Prim(graph, start) {
     // 邻接矩阵
     let matrix = graph.matrix
 
-    let U = [] // 加入到最小生成树的顶点集合， 用来描述 matrix中权值为0时表示已添加到集合
+    let U = [] // 加入到最小生成树的顶点集合， 用来描述 lowcost中权值为0时表示顶点k已添加到集合
 
     let k = 0 // 最短邻接边
     let adjvex = [] // 邻接点
