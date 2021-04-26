@@ -1,5 +1,6 @@
 /**
  * 二叉搜索树(二叉搜索树): 每个节点的左节点数小于节点， 右节点数大于节点 
+ * 参考: https://xiaqiu2233.github.io/2017/10/11/%E5%88%A0%E9%99%A4%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E7%9A%84%E8%8A%82%E7%82%B9/
  */
 
 class Node {
@@ -7,7 +8,6 @@ class Node {
         this.data = data
         this.left = left
         this.right = right
-        this.parent = null
     }
 
 }
@@ -26,14 +26,12 @@ class BSTree {
         if (node.data > data) {
             if (node.left === null) {
                 node.left = new Node(data)
-                node.left.parent = node // 用于删除时查找父节点
             } else {
                 this._insertNode(node.left, data)
             }
         } else {
             if (node.right === null) {
                 node.right = new Node(data)
-                node.right.parent = node
             } else {
                 this._insertNode(node.right, data)
             }
@@ -49,51 +47,45 @@ class BSTree {
         }
     }
 
-    /**
-     * 搜索
-     * @param {Node} node 搜索的节点
-     * @param {Int} data 数值
-     */
-    _searchNode(node, data) {
-        // 把搜索的值和当前节点比较, 如果大于则递归搜索子节点, 小于则递归搜索右节点
-        if (node.data > data) {
-            if (node.left === null) {
-                return null
-            } else {
-                return this._searchNode(node.left, data)
+    find(data) {
+        let node = this.root
+        while (node) {
+            if (node.data === data) {
+                return node
             }
-        } else if (node.data < data) {
-            if (node.right === null) {
-                return null
+
+            if (node.data > data) {
+                node = node.left
             } else {
-                return this._searchNode(node.right, data)
+                node = node.right
             }
         }
-
-        return node
+        return null
     }
 
-    searchNode(data) {
-        if (this.root === null) {
-            return null
-        } else {
-            return this._searchNode(this.root, data)
-        }
-    }
+    findParent(node) {
+        let parent = null
+        let current = this.root;
+        while (current) {
+            if (current === node) {
+                return parent
+            }
 
-    // 连接左子节点和右子节点
-    joinRightNode(parent, child) {
-        if (parent.right) {
-            this.joinRightNode(parent.right, child)
-        } else {
-            parent.right = child
-            child.parent = parent
+            parent = current
+
+            if (current.data > node.data) {
+                current = current.left
+            } else {
+                current = current.right
+            }
         }
+
+        return null
     }
 
     remove(data) {
-        let node = this.searchNode(data)
-        let parent = node.parent
+        let node = this.find(data)
+        let parent = this.findParent(node)
 
         // 如果节点不存在，返回
         if (!node) {
@@ -102,7 +94,7 @@ class BSTree {
 
         // 第一种情况: 当搜索的节点时叶子节点的时候, 直接删除即可
         // 第二种情况: 删除的节点只有左子树，右子树(或只有右子树没有左子树), 只需要将唯一子节点替换成当前节点即可
-        // 第三种情况: 删除的节点左子树和右子树均在的情况下， 将左子树替换为当前节点， 并把原先的右子树设置为原先左子树的右子树(这里原先左子树有可能包含右子树所以需要递归)
+        // 第三种情况: 删除的节点左子树和右子树均在的情况下， 从右子树中找出最小的节点替换为当前节点，并删除原右子树最小节点
         if (!node.left && !node.right) {
             if (node === parent.left) {
                 parent.left = null;
@@ -115,37 +107,60 @@ class BSTree {
             } else {
                 parent.right = node.left
             }
-            node.left.parent = parent
         } else if (!node.left && node.right) {
             if (node === parent.left) {
                 parent.left = node.right
             } else {
                 parent.right = node.right
             }
-            node.right.parent = parent
         } else if (node.left && node.right) {
+            // 如果删除的节点为左节点
             if (node === parent.left) {
-                parent.left = node.left
+                let prev = null
+                let cur = node.right
+                while (cur.left) {
+                    prev = cur
+                    cur = cur.left
+                }
+                // 把当前节点替换为最小节点
+                parent.left = cur
+
+                cur.left = node.left
+                cur.right = node.right
+
+                // 把最小子节点原有的位置删除
+                prev.left = null
+
             } else {
                 parent.right = node.left
+                let cur = node.right
+                let prev = null
+                while (cur.left) {
+                    prev = cur
+                    cur = cur.left
+                }
+                parent.right = cur
+                cur.left = node.left
+                cur.right = node.right
+                prev.left = null
             }
-            // 连接节点
-            this.joinRightNode(node.left, node.right)
         }
 
     }
 }
 
-let t = new BSTree()
-let lst = [4, 8, 6, 7, 9, 3, 2, 1, 10]
 
-lst.forEach(item => {
-    t.insertNode(item)
-})
-t.remove(2)
-console.log(t.searchNode(1))
-console.log(t.root)
-    // let n = t.searchNode(3)
-    // let m = t.searchNode(2)
-    // console.log(n)
-    // console.log(m.parent)
+function main() {
+    let t = new BSTree()
+    t.insertNode(6)
+    t.insertNode(3)
+    t.insertNode(7)
+    t.insertNode(8)
+    t.insertNode(2)
+    t.insertNode(5)
+    t.insertNode(4)
+    t.remove(3)
+    console.log(t.root)
+}
+
+main()
