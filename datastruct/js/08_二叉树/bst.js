@@ -53,6 +53,22 @@ class BST {
         }
     }
 
+    cover(oldNode, newNode) {
+        // 覆盖原有的节点
+        // 继承原有节点的父子节点
+        newNode.left = oldNode.left
+        newNode.right = oldNode.right
+        newNode.parent = oldNode.parent
+
+        if (oldNode.left) {
+            oldNode.left.parent = newNode
+        }
+
+        if (oldNode.right) {
+            oldNode.right.parent = newNode
+        }
+    }
+
     remove(value) {
 
         let node = this.find(value)
@@ -88,12 +104,16 @@ class BST {
             // N包含左右子树
             else if (node.left && node.right) {
                 let minNode = this.findMin(node.right) // 找出最小子节点
-                minNode.parent.left = null // 删除与原父节点之间联系
 
-                node.parent.left = minNode // 将与N替换
-                minNode.left = node.left
-                minNode.right = node.right
-                minNode.parent = node.parent
+                // 如果最小子节点为右节点
+                if (minNode === node.right) {
+                    node.right = null
+                } else {
+                    minNode.parent.left = null // 删除与原父节点之间联系
+                }
+
+                node.parent.left = minNode // 将与N替换 
+                this.cover(node, minNode) // 覆盖删除的节点
             }
 
             // 将原节点的父节点关系删除
@@ -123,12 +143,16 @@ class BST {
             // N包含左右子树
             else if (node.left && node.right) {
                 let minNode = this.findMin(node.right) // 找出最小子节点
-                minNode.parent.left = null // 删除与原父节点之间联系
+
+                // 如果最小子节点为右节点
+                if (minNode === node.right) {
+                    node.right = null
+                } else {
+                    minNode.parent.left = null // 删除与原父节点之间联系
+                }
 
                 node.parent.right = minNode // 将与N替换
-                minNode.left = node.left
-                minNode.right = node.right
-                minNode.parent = node.parent
+                this.cover(node, minNode) // 覆盖删除的节点
             }
 
             // 将原节点的父节点关系删除
