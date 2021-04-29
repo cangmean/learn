@@ -8,6 +8,7 @@
  * 参考: https://blog.csdn.net/sun_tttt/article/details/65445754
  * https://www.jianshu.com/p/00aae4f4d672
  * https://github.com/1921622004/leetcode-practice/blob/master/def/RedBlackTree.js
+ * https://www.cnblogs.com/qingergege/p/7351659.html
  */
 
 
@@ -118,6 +119,10 @@ class RedBlackTree {
         return node.isRed()
     }
 
+    isLeaf(node) {
+        return !node.left && !node.right
+    }
+
     _insert(node, curNode) {
 
         if (node.value > curNode.value) {
@@ -140,7 +145,6 @@ class RedBlackTree {
     }
 
     _insertFix(node) {
-
         // N的父节点存在且父节点为红时不符合红黑树性质, 循环开始
         while (node.parent && this.isRed(node.parent)) {
 
@@ -156,6 +160,7 @@ class RedBlackTree {
             // 父为祖 左节点
             if (node.parent === node.parent.parent.left) {
                 let uncle = node.parent.parent.right
+                let g = node.parent.parent
 
                 // 父红 叔黑 祖黑: N(添加的节点)
                 if (this.isBlack(uncle)) {
@@ -164,7 +169,7 @@ class RedBlackTree {
                     if (node === node.parent.left) {
                         node.parent.setBlack()
                         node.parent.parent.setRed()
-                        this.rightRotate(node.parent.parent)
+                        this.rightRotate(g)
                     }
 
                     // N为右儿子
@@ -172,7 +177,7 @@ class RedBlackTree {
                         node.setBlack() // N变黑
                         node.parent.parent.setRed() // 祖变红
                         this.leftRotate(node.parent) // 父 左旋转
-                        this.rightRotate(node.parent.parent) // 祖 右旋转
+                        this.rightRotate(g) // 祖 右旋转
                     }
                 }
 
@@ -181,6 +186,7 @@ class RedBlackTree {
             // 父为祖 右节点
             else if (node.parent === node.parent.parent.right) {
                 let uncle = node.parent.parent.left
+                let g = node.parent.parent
 
                 // 父红 叔黑 祖黑: N(添加的节点)
                 if (this.isBlack(uncle)) {
@@ -190,13 +196,13 @@ class RedBlackTree {
                         node.setBlack() // n变黑
                         node.parent.parent.setRed() // 祖变红
                         this.rightRotate(node.parent) // 父 右旋转
-                        this.leftRotate(node.parent.parent) // 祖 左旋转
+                        this.leftRotate(g) // 祖 左旋转
                     }
                     // N为右儿子
                     else if (node === node.parent.right) {
                         node.parent.setBlack() // 父变黑
                         node.parent.parent.setRed() // 祖变红
-                        this.leftRotate(node.parent.parent) // 祖 左旋转
+                        this.leftRotate(g) // 祖 左旋转
                     }
                 }
 
@@ -205,7 +211,8 @@ class RedBlackTree {
         this.root.setBlack()
     }
 
-    insert(node) {
+    insert(value) {
+        let node = new Node(value, value)
         if (this.root === null) {
             this.root = node
             this.root.setBlack() // 根节点为黑色
@@ -215,14 +222,152 @@ class RedBlackTree {
         }
     }
 
+    cover(oldNode, newNode) {
+        // 覆盖原有的节点
+        // 继承原有节点的父子节点
+        newNode.left = oldNode.left
+        newNode.right = oldNode.right
+        newNode.parent = oldNode.parent
+
+        if (oldNode.left) {
+            oldNode.left.parent = newNode
+        }
+
+        if (oldNode.right) {
+            oldNode.right.parent = newNode
+        }
+    }
+
     remove(value) {
-
         let node = this.find(value)
-
-        // 不存在节点
         if (!node) {
             return
         }
+
+        // 如果删除的节点是红色的
+        if (this.isRed(node)) {
+
+            // 如果节点是叶子节点, 直接删除节点
+            if (this.isLeaf(node)) {
+                this._remove(node)
+            }
+            // 如果是一般节点, 则将替换的节点染成红色
+            else {
+                let parent = node.parent
+                if (node === parent.left) {
+                    this._remove(node)
+                    parent.left.setRed()
+                } else {
+                    this._remove(node)
+                    parent.right.setRed()
+                }
+            }
+        }
+        // 如果删除的节点是黑色的
+        else if (this.isBlack(node)) {
+
+            // 删除的节点有子树(因为性质5 存在的子树颜色必为红)
+            // 这个时候子树染黑后替换原来的树即可
+            if (node.left && !node.right) {
+                node.left.setBlack()
+            } else if (!node.left && node.right) {
+                node.right.setBlack()
+            }
+            // 当节点包含左右子树, 根据性质左右子树必定都为红色
+            else if (node.left && node.right) {
+                let minNode = this.findMin(node.right)
+                minNode.color = node.color
+
+            }
+            // 当节点为叶子节点
+            else {
+                // 删除的节点D
+                // 父节点P
+                // 兄弟节点S
+                // 兄弟左节点SL, 兄弟右节点SR
+
+                // 当D为P的左节点
+                if (node === node.parent.left) {
+
+                    let sibling = node.parent.right
+
+                    // D黑 S红
+                    if (this.isRed(sibling)) {
+                        [node.parent.color, sibling.color] = [sibling.color, node.parent.color] // P和S互换
+                        this.leftRotate(node.parent) // RR情况  P左旋转
+                    }
+
+                    // D黑 S黑 SR红(远侄子)
+                    else if (this.isBlack(sibling) && this.isRed(sibling.right)) {
+                        [node.parent.color, sibling.color] = [sibling.color, node.parent.color] // P和S互换
+                        sibling.right.setBlack() // SR黑
+                        this.leftRotate(node.parent)
+                    }
+
+                    // D黑 S黑 SL红(近侄子)
+                    else if (this.isBlack(sibling) && this.isRed(sibling.left)) {
+                        [sibling.color, sibling.left.color] = [sibling.left.color, sibling.color]
+                        this.rightRotate(sibling) // RL情况 对S进行右旋转, 在对P进行左旋转
+                        this.leftRotate(node.parent)
+                    }
+
+                    // D黑 S黑 P红 
+                    else if (this.isBlack(sibling) && this.isRed(node.parent)) {
+                        this.node.parent.setBlack() // P黑
+                        sibling.setRed() // S红
+                    }
+
+                    // D黑 S黑 P黑 SL黑 SR黑
+                    else if (this.isBlack(sibling) && this.isBlack(node.parent) && this.isBlack(sibling.left) && this.isBlack(sibling.right)) {
+                        sibling.setRed() // S红
+                    }
+
+                }
+                // 当D为P的右节点
+                else if (node === node.parent.right) {
+                    let sibling = node.parent.left
+
+                    // D黑 S红
+                    if (this.isRed(sibling)) {
+                        [node.parent.color, sibling.color] = [sibling.color, node.parent.color] // P和S互换
+                        this.rightRotate(node.parent) // LL情况  P右旋转
+                    }
+                    // D黑 S黑 SL红(远侄子)
+                    else if (this.isBlack(sibling) && this.isRed(sibling.left)) {
+                        [node.parent.color, sibling.color] = [sibling.color, node.parent.color] // P和S互换
+                        sibling.left.setBlack() // SR黑
+                        this.rightRotate(node.parent) // LL情况  P左旋转
+                    }
+
+                    // D黑 S黑 SR红(近侄子)
+                    else if (this.isBlack(sibling) && this.isRed(sibling.right)) {
+                        [sibling.color, sibling.right.color] = [sibling.right.color, sibling.color]
+                        this.leftRotate(sibling) // LR情况 对S进行左旋转，在对P进行右旋转
+                        this.rightRotate(node.parent)
+                    }
+
+                    // D黑 S黑 P红
+                    else if (this.isBlack(sibling) && this.isRed(node.parent)) {
+                        this.node.parent.setBlack() // P黑
+                        sibling.setRed() // S红
+                    }
+
+                    // D黑 S黑 P黑 SL黑 SR黑
+                    else if (this.isBlack(sibling) && this.isBlack(node.parent) && this.isBlack(sibling.left) && this.isBlack(sibling.right)) {
+                        sibling.setRed() // S红
+                    }
+
+                }
+
+            }
+
+            this._remove(node) // 删除节点D
+
+        }
+
+    }
+
+    _remove(node) {
 
         // N为删除节点 以下是二叉搜索树的删除
         // 第一种情况: 当搜索的节点时叶子节点的时候, 直接删除即可
@@ -250,12 +395,16 @@ class RedBlackTree {
             // N包含左右子树
             else if (node.left && node.right) {
                 let minNode = this.findMin(node.right) // 找出最小子节点
-                minNode.parent.left = null // 删除与原父节点之间联系
 
-                node.parent.left = minNode // 将与N替换
-                minNode.left = node.left
-                minNode.right = node.right
-                minNode.parent = node.parent
+                // 如果最小子节点为右节点
+                if (minNode === node.right) {
+                    node.right = null
+                } else {
+                    minNode.parent.left = null // 删除与原父节点之间联系
+                }
+
+                node.parent.left = minNode // 将与N替换 
+                this.cover(node, minNode) // 覆盖删除的节点
             }
 
             // 将原节点的父节点关系删除
@@ -285,18 +434,21 @@ class RedBlackTree {
             // N包含左右子树
             else if (node.left && node.right) {
                 let minNode = this.findMin(node.right) // 找出最小子节点
-                minNode.parent.left = null // 删除与原父节点之间联系
+
+                // 如果最小子节点为右节点
+                if (minNode === node.right) {
+                    node.right = null
+                } else {
+                    minNode.parent.left = null // 删除与原父节点之间联系
+                }
 
                 node.parent.right = minNode // 将与N替换
-                minNode.left = node.left
-                minNode.right = node.right
-                minNode.parent = node.parent
+                this.cover(node, minNode) // 覆盖删除的节点
             }
 
             // 将原节点的父节点关系删除
             node.parent = null
         }
-
     }
 
     find(value) {
@@ -347,11 +499,8 @@ class RedBlackTree {
 function main() {
     let t = new RedBlackTree()
     let arr = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
-    arr.forEach(value => t.insert(new Node(value, value)))
+    arr.forEach(value => t.insert(value))
     console.log('=================RBT==============\n', t, '\n============================')
-    t.remove(1)
-    console.log(t.find(3))
-
 }
 
 main()
